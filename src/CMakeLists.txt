@@ -33,11 +33,11 @@ add_executable(post_stretch
    )
 
 target_link_libraries(post_stretch
+    stretch
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY} 
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CAIRO_LIBRARY}
-    stretch
     )
 
 find_package(Doxygen)
