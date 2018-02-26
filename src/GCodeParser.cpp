@@ -111,6 +111,10 @@ void GCodeWriter::Write(const GCodeStep& step)
 
     if (step.m_Comment.size())
         cout << ";" << step.m_Comment;
+
+    if (step.m_Anything.size())
+       cout << step.m_Anything;
+
     cout << endl;
 
     m_CurX = step.m_X;
@@ -141,6 +145,7 @@ struct GCodeFileParser
         m_ZLayer(0) {}
 
     void Comment(const vector<char>& v);
+    void Anything(const vector<char>& v);
 
     GCodeStep m_CurrentStep;
 
@@ -179,6 +184,7 @@ void GCodeFileParser::FlushStep()
 
     // Clear next gcode step
     m_CurrentStep.m_Comment.clear();
+    m_CurrentStep.m_Anything.clear();
     m_CurrentStep.m_Step = GC_NOP;
 }
 
@@ -187,6 +193,12 @@ void GCodeFileParser::Comment(const vector<char>& v)
     m_CurrentStep.m_Comment = string(v.begin(),v.end());
 }
 
+void GCodeFileParser::Anything(const vector<char>& v)
+{
+    m_CurrentStep.m_Anything = string(v.begin(),v.end());
+}
+
+
 /** Boost.Spirit grammar of a g-code step
  */
 struct gcode_grammar : grammar<string::iterator>
@@ -194,7 +206,7 @@ struct gcode_grammar : grammar<string::iterator>
     GCodeFileParser& data;
     gcode_grammar(GCodeFileParser& data_) : gcode_grammar::base_type(start),data(data_)
     {
-        start = -instruction >> -comment >> eps[phx::bind(&GCodeFileParser::FlushStep,&data)];
+        start = -instruction >> -comment >> -anything >> eps[phx::bind(&GCodeFileParser::FlushStep,&data)];
     }
     rule<string::iterator> comment =
         (";" >> *char_)[phx::bind(&GCodeFileParser::Comment,&data,qi::_1)];
@@ -221,6 +233,8 @@ struct gcode_grammar : grammar<string::iterator>
         (lit("G92") >> +char_(' ') >> (param % ' '))[phx::ref(data.m_CurrentStep.m_Step) = GC_DefinePos];
     rule<string::iterator> instruction =
         ins_g0 | ins_m107 | ins_g1 | ins_g10 | ins_g11 | ins_m106 | ins_g92;
+    rule<string::iterator> anything =
+       (*char_)[phx::bind(&GCodeFileParser::Anything,&data,qi::_1)];
     rule<string::iterator> start;
 };
 

@@ -33,6 +33,7 @@ class GCodeStep
         double m_F /** Speed at the end of the movement */;
         int m_S /** Fan speed */;
         std::string m_Comment /** Comment */;
+        std::string m_Anything /** Anything */;
 
         GCodeStep() :
             m_X(0),
